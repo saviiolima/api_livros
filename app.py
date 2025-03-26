@@ -1,7 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import sqlite3
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 
 def inicializar_banco():
@@ -23,7 +25,7 @@ inicializar_banco()
 
 @app.route('/')
 def pagina_inicial():
-    return '<h2>Bem-vindo à Biblioteca Virtual! Doe e descubra novos livros.</h2>'
+    return render_template('index.html')
 
 
 @app.route("/doar", methods=['POST'])
@@ -65,6 +67,19 @@ def listar_livros():
     ]
 
     return jsonify(lista_livros), 200
+
+
+@app.route("/livros/<int:livro_id>", methods=['GET'])
+def deletar_livro(livro_id):
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM LIVROS WHERE id = ?", (livro_id,))
+        conn.commit()
+
+    if cursor.rowcount == 0:
+        return jsonify({"erro": "Livro não encontrado!"}), 404
+
+    return jsonify({"mensagem": "Livro deletado com sucesso!"}), 200
 
 
 if __name__ == '__main__':
